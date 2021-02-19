@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.rzn.gmyasoedov.model.CatalogData;
+import ru.rzn.gmyasoedov.service.processors.FileProcessor;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,8 +28,19 @@ public class FileProcessorService {
         this.reportProcessorPool = Executors.newFixedThreadPool(reportProcessorPoolSize);
     }
 
+    public void shutdown() {
+        reportProcessorPool.shutdown();
+    }
+
+    public void shutdownNow() {
+        reportProcessorPool.shutdownNow();
+    }
+
     public void processFiles(CatalogData catalogData) {
-        List<FileProcessor> processors = fileProcessorHolder.getProcessorByType(catalogData.getReportType());
+        List<FileProcessor> processors = catalogData.getReportTypes()
+                .stream()
+                .flatMap(type -> fileProcessorHolder.getProcessorByType(type).stream())
+                .collect(Collectors.toList());
         if (processors.isEmpty()) {
             return;
         }
@@ -38,25 +50,21 @@ public class FileProcessorService {
                     .filter(Files::isRegularFile)
                     .filter(this::isSupportFile)
                     .collect(Collectors.toList());
-            for (Path filePath : supportFiles) {
-                processors.stream()
-                        .filter(processor -> !catalogData.isProcessingTask(filePath, processor.getClass()))
-                        .forEach(processor -> {
-                            catalogData.addProcessingTasks(filePath, processor.getClass());
-                            reportProcessorPool.submit(() -> processor.process(filePath));
-                        });
-            }
+            submitReportTasks(catalogData, processors, supportFiles);
         } catch (Exception e) {
             logger.error("error process path {}", catalogData.getPath(), e);
         }
     }
 
-    public void shutdown() {
-        reportProcessorPool.shutdown();
-    }
-
-    public void shutdownNow() {
-        reportProcessorPool.shutdownNow();
+    private void submitReportTasks(CatalogData catalogData, List<FileProcessor> processors, List<Path> supportFiles) {
+        for (Path filePath : supportFiles) {
+            processors.stream()
+                    .filter(processor -> !catalogData.isProcessingTask(filePath, processor.getClass()))
+                    .forEach(processor -> {
+                        catalogData.addProcessingTasks(filePath, processor.getClass());
+                        reportProcessorPool.submit(() -> processor.process(filePath));
+                    });
+        }
     }
 
     private boolean isSupportFile(Path path) {

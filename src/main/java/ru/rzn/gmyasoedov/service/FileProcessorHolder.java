@@ -2,6 +2,7 @@ package ru.rzn.gmyasoedov.service;
 
 import com.google.common.base.Preconditions;
 import org.jetbrains.annotations.NotNull;
+import ru.rzn.gmyasoedov.service.processors.FileProcessor;
 
 import java.util.Collections;
 import java.util.List;
@@ -25,7 +26,7 @@ public class FileProcessorHolder {
     public void addProcessor(@NotNull FileProcessor processor) {
         Preconditions.checkNotNull(processor);
         fileProcessorsByType.merge(
-                processor.getType(),
+                processor.getType().toLowerCase(),
                 new CopyOnWriteArrayList<>(Collections.singletonList(processor)),
                 (list1, list2) -> {
                     list1.addAll(list2);
@@ -36,7 +37,7 @@ public class FileProcessorHolder {
     public void removeProcessor(@NotNull FileProcessor removeProcessor) {
         Preconditions.checkNotNull(removeProcessor);
         fileProcessorsByType.computeIfPresent(
-                removeProcessor.getType(),
+                removeProcessor.getType().toLowerCase(),
                 (s, fileProcessors) -> {
                     fileProcessors.removeIf(processor -> processor.getClass() == removeProcessor.getClass());
                     return fileProcessors;

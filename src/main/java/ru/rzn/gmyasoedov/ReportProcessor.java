@@ -3,7 +3,7 @@ package ru.rzn.gmyasoedov;
 import com.google.common.base.Preconditions;
 import org.jetbrains.annotations.NotNull;
 import ru.rzn.gmyasoedov.service.CatalogScannerService;
-import ru.rzn.gmyasoedov.service.FileProcessor;
+import ru.rzn.gmyasoedov.service.processors.FileProcessor;
 import ru.rzn.gmyasoedov.service.FileProcessorHolder;
 
 import java.time.Duration;
@@ -11,12 +11,6 @@ import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-/**
- * 1 добавить каталог(имя, тип)
- * 2 удалить каталог(имя)
- * 3 добавить обработчик(тип, класс)
- * 4 удалить обработчик(тип, класс)
- */
 public class ReportProcessor {
     private final Duration schedulePeriod;
     private final CatalogScannerService catalogScannerService;

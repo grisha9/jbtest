@@ -2,8 +2,8 @@ package ru.rzn.gmyasoedov.service;
 
 import com.google.common.base.Preconditions;
 import org.jetbrains.annotations.NotNull;
-import ru.rzn.gmyasoedov.CatalogEvent;
-import ru.rzn.gmyasoedov.CatalogEventType;
+import ru.rzn.gmyasoedov.model.CatalogEvent;
+import ru.rzn.gmyasoedov.model.CatalogEventType;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,8 +18,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static ru.rzn.gmyasoedov.CatalogEventType.ADD;
-import static ru.rzn.gmyasoedov.CatalogEventType.REMOVE;
+import static ru.rzn.gmyasoedov.model.CatalogEventType.ADD;
+import static ru.rzn.gmyasoedov.model.CatalogEventType.REMOVE;
 
 
 public class CatalogScannerService {
@@ -49,7 +49,7 @@ public class CatalogScannerService {
         Path path = Path.of(pathString);
         Preconditions.checkArgument(Files.exists(path));
         Preconditions.checkArgument(Files.isDirectory(path));
-        catalogEvents.add(new CatalogEvent(ADD, path, type));
+        catalogEvents.add(new CatalogEvent(ADD, path, type.toLowerCase()));
     }
 
     public void removeCatalogEvent(@NotNull String pathString) {
