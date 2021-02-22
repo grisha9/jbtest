@@ -5,7 +5,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.rzn.gmyasoedov.model.AddCatalogEvent;
 import ru.rzn.gmyasoedov.model.CatalogData;
-import ru.rzn.gmyasoedov.model.RemoveCatalogEvent;
 
 import java.util.Map;
 
@@ -51,7 +50,7 @@ class CatalogDataHolderTest {
     void removeDirectory() {
         catalogDataHolder.addDirectory(new AddCatalogEvent(PATH_CORRECT_1, REPORT_TYPE_1));
         Assertions.assertFalse(catalogDataHolder.getCatalogs().isEmpty());
-        catalogDataHolder.removeDirectory(new RemoveCatalogEvent(PATH_CORRECT_1));
+        catalogDataHolder.removeDirectory(PATH_CORRECT_1);
         Assertions.assertTrue(catalogDataHolder.getCatalogs().isEmpty());
     }
 }

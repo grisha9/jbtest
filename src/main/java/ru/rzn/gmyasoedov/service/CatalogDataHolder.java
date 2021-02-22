@@ -4,7 +4,6 @@ import com.google.common.base.Preconditions;
 import org.jetbrains.annotations.NotNull;
 import ru.rzn.gmyasoedov.model.AddCatalogEvent;
 import ru.rzn.gmyasoedov.model.CatalogData;
-import ru.rzn.gmyasoedov.model.RemoveCatalogEvent;
 
 import java.util.Collection;
 import java.util.Map;
@@ -37,8 +36,8 @@ class CatalogDataHolder {
         });
     }
 
-    void removeDirectory(@NotNull RemoveCatalogEvent event) {
-        Preconditions.checkNotNull(event);
-        catalogDataMap.remove(event.getCanonicalPath());
+    void removeDirectory(@NotNull String canonicalPath) {
+        Preconditions.checkNotNull(canonicalPath);
+        catalogDataMap.remove(canonicalPath);
     }
 }

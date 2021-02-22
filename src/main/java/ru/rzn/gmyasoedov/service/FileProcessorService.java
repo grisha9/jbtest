@@ -40,6 +40,14 @@ public class FileProcessorService {
         return reportProcessorPool.isTerminated();
     }
 
+    public void addProcessor(FileProcessor processor) {
+        fileProcessorHolder.addProcessor(processor);
+    }
+
+    public void removeProcessor(FileProcessor processor) {
+        fileProcessorHolder.removeProcessor(processor);
+    }
+
     public void processFiles(CatalogData catalogData) {
         List<FileProcessor> processors = catalogData.getReportTypes()
                 .stream()

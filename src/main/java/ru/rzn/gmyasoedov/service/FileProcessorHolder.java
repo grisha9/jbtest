@@ -27,7 +27,6 @@ public class FileProcessorHolder {
     }
 
     public void addProcessor(@NotNull FileProcessor processor) {
-        Preconditions.checkNotNull(processor);
         fileProcessorsByType.compute(processor.getType().toLowerCase(),
                 (type, processors) -> {
                     if (processors == null) {
@@ -40,7 +39,6 @@ public class FileProcessorHolder {
     }
 
     public void removeProcessor(@NotNull FileProcessor removeProcessor) {
-        Preconditions.checkNotNull(removeProcessor);
         fileProcessorsByType.computeIfPresent(
                 removeProcessor.getType().toLowerCase(),
                 (s, fileProcessors) -> {

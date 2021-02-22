@@ -17,7 +17,6 @@ import static java.lang.String.format;
 public class ReportProcessor {
     private final Duration schedulePeriod;
     private final CatalogScannerService catalogScannerService;
-    private final FileProcessorHolder fileProcessorHolder;
     private final ReentrantReadWriteLock readWriteLock;
     private ReportStatus status;
 
@@ -28,9 +27,8 @@ public class ReportProcessor {
         Preconditions.checkArgument(reportProcessorPoolSize > 0);
 
         this.schedulePeriod = schedulePeriod;
-        this.fileProcessorHolder = new FileProcessorHolder();
         this.catalogScannerService = new CatalogScannerService(
-                new FileProcessorService(fileProcessorHolder, reportProcessorPoolSize)
+                new FileProcessorService(new FileProcessorHolder(), reportProcessorPoolSize)
         );
         this.readWriteLock = new ReentrantReadWriteLock();
         this.status = ReportStatus.CREATED;
@@ -62,7 +60,7 @@ public class ReportProcessor {
 
     public void addProcessor(@NotNull FileProcessor processor) {
         performAction(
-                () -> fileProcessorHolder.addProcessor(processor),
+                () -> catalogScannerService.addProcessor(processor),
                 readWriteLock.readLock(),
                 Set.of(ReportStatus.CREATED, ReportStatus.RUNNING)
         );
@@ -70,7 +68,7 @@ public class ReportProcessor {
 
     public void removeProcessor(@NotNull FileProcessor processor) {
         performAction(
-                () -> fileProcessorHolder.removeProcessor(processor),
+                () -> catalogScannerService.removeProcessor(processor),
                 readWriteLock.readLock(),
                 Set.of(ReportStatus.CREATED, ReportStatus.RUNNING)
         );
