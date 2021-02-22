@@ -36,6 +36,10 @@ public class FileProcessorService {
         reportProcessorPool.shutdownNow();
     }
 
+    public boolean isTerminated() {
+        return reportProcessorPool.isTerminated();
+    }
+
     public void processFiles(CatalogData catalogData) {
         List<FileProcessor> processors = catalogData.getReportTypes()
                 .stream()
@@ -45,14 +49,14 @@ public class FileProcessorService {
             return;
         }
 
-        try (Stream<Path> walk = Files.walk(catalogData.getPath())) {
+        try (Stream<Path> walk = Files.walk(Path.of(catalogData.getCanonicalPath()))) {
             List<Path> supportFiles = walk
                     .filter(Files::isRegularFile)
                     .filter(this::isSupportFile)
                     .collect(Collectors.toList());
             submitReportTasks(catalogData, processors, supportFiles);
         } catch (Exception e) {
-            logger.error("error process path {}", catalogData.getPath(), e);
+            logger.error("error process path {}", catalogData.getCanonicalPath(), e);
         }
     }
 

@@ -4,13 +4,18 @@ import java.nio.file.Path;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Состояние обработки каталога
+ * processingTasks - обработанные/обрабатываемые файлы в каталоге
+ * reportTypes - типы отчетов в каталоге
+ */
 public class CatalogData {
-    private final Path path;
+    private final String canonicalPath;
     private final Set<ReportTask> processingTasks;
     private final Set<String> reportTypes;
 
-    public CatalogData(String reportType, Path path) {
-        this.path = path;
+    public CatalogData(String reportType, String canonicalPath) {
+        this.canonicalPath = canonicalPath;
         this.processingTasks = ConcurrentHashMap.newKeySet();
         this.reportTypes = ConcurrentHashMap.newKeySet();
         this.reportTypes.add(reportType);
@@ -32,7 +37,7 @@ public class CatalogData {
         processingTasks.add(new ReportTask(filePath, processorClass));
     }
 
-    public Path getPath() {
-        return path;
+    public String getCanonicalPath() {
+        return canonicalPath;
     }
 }

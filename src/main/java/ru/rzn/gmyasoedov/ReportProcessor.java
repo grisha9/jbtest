@@ -3,13 +3,16 @@ package ru.rzn.gmyasoedov;
 import com.google.common.base.Preconditions;
 import org.jetbrains.annotations.NotNull;
 import ru.rzn.gmyasoedov.service.CatalogScannerService;
-import ru.rzn.gmyasoedov.service.processors.FileProcessor;
 import ru.rzn.gmyasoedov.service.FileProcessorHolder;
+import ru.rzn.gmyasoedov.service.FileProcessorService;
+import ru.rzn.gmyasoedov.service.processors.FileProcessor;
 
 import java.time.Duration;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import static java.lang.String.format;
 
 public class ReportProcessor {
     private final Duration schedulePeriod;
@@ -26,7 +29,9 @@ public class ReportProcessor {
 
         this.schedulePeriod = schedulePeriod;
         this.fileProcessorHolder = new FileProcessorHolder();
-        this.catalogScannerService = new CatalogScannerService(fileProcessorHolder, reportProcessorPoolSize);
+        this.catalogScannerService = new CatalogScannerService(
+                new FileProcessorService(fileProcessorHolder, reportProcessorPoolSize)
+        );
         this.readWriteLock = new ReentrantReadWriteLock();
         this.status = ReportStatus.CREATED;
     }
@@ -88,7 +93,9 @@ public class ReportProcessor {
     private void performAction(Runnable action, Lock lock, Set<ReportStatus> validStatuses, ReportStatus newStatus) {
         try {
             lock.lock();
-            Preconditions.checkArgument(validStatuses.contains(status));
+            if (!validStatuses.contains(status)) {
+                throw new IllegalStateException(format("not valid state current %s needs %s", status, validStatuses));
+            };
             action.run();
             if (newStatus != null) {
                 status = newStatus;

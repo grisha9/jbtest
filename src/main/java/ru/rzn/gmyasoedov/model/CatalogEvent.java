@@ -1,27 +1,13 @@
 package ru.rzn.gmyasoedov.model;
 
-import java.nio.file.Path;
+public abstract class CatalogEvent {
+    private final String canonicalPath;
 
-public class CatalogEvent {
-    private final CatalogEventType type;
-    private final Path path;
-    private final String reportType;
-
-    public CatalogEvent(CatalogEventType type, Path path, String reportType) {
-        this.type = type;
-        this.path = path;
-        this.reportType = reportType;
+    CatalogEvent(String canonicalPath) {
+        this.canonicalPath = canonicalPath;
     }
 
-    public CatalogEventType getType() {
-        return type;
-    }
-
-    public Path getPath() {
-        return path;
-    }
-
-    public String getReportType() {
-        return reportType;
+    public String getCanonicalPath() {
+        return canonicalPath;
     }
 }

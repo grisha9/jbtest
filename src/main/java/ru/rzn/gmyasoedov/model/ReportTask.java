@@ -7,7 +7,7 @@ public class ReportTask {
     private final Path reportPath;
     private final Class processorClass;
 
-    public ReportTask(Path reportPath, Class reportClass) {
+    ReportTask(Path reportPath, Class reportClass) {
         this.reportPath = reportPath;
         this.processorClass = reportClass;
     }

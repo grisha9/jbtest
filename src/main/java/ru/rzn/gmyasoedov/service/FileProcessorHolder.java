@@ -10,6 +10,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+/**
+ * хранилище текущих обработчиков отчетов
+ */
 public class FileProcessorHolder {
 
     private final Map<String, List<FileProcessor>> fileProcessorsByType;
@@ -20,17 +23,19 @@ public class FileProcessorHolder {
 
     public List<FileProcessor> getProcessorByType(@NotNull String type) {
         Preconditions.checkNotNull(type);
-        return fileProcessorsByType.getOrDefault(type, Collections.emptyList());
+        return fileProcessorsByType.getOrDefault(type.toLowerCase(), Collections.emptyList());
     }
 
     public void addProcessor(@NotNull FileProcessor processor) {
         Preconditions.checkNotNull(processor);
-        fileProcessorsByType.merge(
-                processor.getType().toLowerCase(),
-                new CopyOnWriteArrayList<>(Collections.singletonList(processor)),
-                (list1, list2) -> {
-                    list1.addAll(list2);
-                    return list1;
+        fileProcessorsByType.compute(processor.getType().toLowerCase(),
+                (type, processors) -> {
+                    if (processors == null) {
+                        processors = new CopyOnWriteArrayList<>(Collections.singletonList(processor));
+                    } else {
+                        processors.add(processor);
+                    }
+                    return processors;
                 });
     }
 
