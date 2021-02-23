@@ -1,24 +1,20 @@
 package ru.rzn.gmyasoedov.service;
 
 import com.google.common.base.Preconditions;
-import org.jetbrains.annotations.NotNull;
 import ru.rzn.gmyasoedov.model.AddCatalogEvent;
+import ru.rzn.gmyasoedov.model.CatalogData;
 import ru.rzn.gmyasoedov.model.Event;
 import ru.rzn.gmyasoedov.model.EventType;
 import ru.rzn.gmyasoedov.service.processors.FileProcessor;
 
-import java.io.File;
-import java.io.IOException;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static ru.rzn.gmyasoedov.model.EventType.ADD_CATALOG;
 import static ru.rzn.gmyasoedov.model.EventType.ADD_PROCESSOR;
@@ -33,18 +29,19 @@ import static ru.rzn.gmyasoedov.model.EventType.SHUTDOWN_NOW;
 public class CatalogScannerService {
 
     private final CatalogDataHolder catalogDataHolder;
+    private final FileProcessorHolder fileProcessorHolder;
     private final FileProcessorService fileProcessorService;
-    private final LinkedBlockingQueue<Event> eventsQueue;
+    private final EventService eventService;
     private volatile ScheduledExecutorService catalogScanScheduler;
 
-    public CatalogScannerService(FileProcessorService fileProcessorService) {
-        this(fileProcessorService, new CatalogDataHolder());
-    }
-
-    CatalogScannerService(FileProcessorService fileProcessorService, CatalogDataHolder catalogDataHolder) {
-        this.catalogDataHolder = catalogDataHolder;
+    public CatalogScannerService(FileProcessorService fileProcessorService,
+                                 CatalogDataHolder catalogDataHolder,
+                                 FileProcessorHolder fileProcessorHolder,
+                                 EventService eventService) {
         this.fileProcessorService = fileProcessorService;
-        this.eventsQueue = new LinkedBlockingQueue<>();
+        this.catalogDataHolder = catalogDataHolder;
+        this.fileProcessorHolder = fileProcessorHolder;
+        this.eventService = eventService;
     }
 
     public void start(Duration schedulePeriod) {
@@ -55,71 +52,29 @@ public class CatalogScannerService {
         );
     }
 
-    public void addCatalogEvent(@NotNull String pathString, @NotNull String type) {
-        Preconditions.checkNotNull(pathString);
-        Preconditions.checkNotNull(type);
-        File file = new File(pathString);
-        Preconditions.checkArgument(file.exists());
-        Preconditions.checkArgument(file.isDirectory());
-        String canonicalPath = getCanonicalPath(file);
-        eventsQueue.add(new Event<>(ADD_CATALOG, new AddCatalogEvent(canonicalPath, type.toLowerCase())));
-    }
-
-    public void removeCatalogEvent(@NotNull String pathString) {
-        Preconditions.checkNotNull(pathString);
-        File file = new File(pathString);
-        String canonicalPath = getCanonicalPath(file);
-        eventsQueue.add(new Event<>(REMOVE_CATALOG, canonicalPath));
-    }
-
-    public void addProcessor(@NotNull FileProcessor processor) {
-        Preconditions.checkNotNull(processor);
-        eventsQueue.add(new Event<>(ADD_PROCESSOR, processor));
-    }
-
-    public void removeProcessor(@NotNull FileProcessor processor) {
-        Preconditions.checkNotNull(processor);
-        eventsQueue.add(new Event<>(REMOVE_PROCESSOR, processor));
-    }
-
-    public void shutdown() {
-        eventsQueue.add(new Event<>(SHUTDOWN, null));
-    }
-
-    public void shutdownNow() {
-        eventsQueue.add(new Event<>(SHUTDOWN_NOW, null));
-    }
-
     public boolean isTerminated() {
         return catalogScanScheduler != null && catalogScanScheduler.isTerminated()
                 && fileProcessorService.isTerminated();
     }
 
     void scanCatalog() {
-        Map<EventType, List<Event>> events = pollEvents();
+        Map<EventType, List<Event>> events = eventService.pollEvents();
         processAddCatalogEvents(events);
         processAddProcessorEvents(events);
 
-        catalogDataHolder.getCatalogs().forEach(fileProcessorService::processFiles);
+        catalogDataHolder.getCatalogs().forEach(this::processFiles);
 
         processRemoveCatalogEvents(events);
         processRemoveProcessorEvents(events);
         processShutdown(events);
     }
 
-    private String getCanonicalPath(File file) {
-        try {
-            return file.getCanonicalPath();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private Map<EventType, List<Event>> pollEvents() {
-        int eventSize = eventsQueue.size();
-        return IntStream.range(0, eventSize)
-                .mapToObj(i -> eventsQueue.poll())
-                .collect(Collectors.groupingBy(Event::getType));
+    private void processFiles(CatalogData catalogData) {
+        List<FileProcessor> processors = catalogData.getReportTypes()
+                .stream()
+                .flatMap(type -> fileProcessorHolder.getProcessorByType(type).stream())
+                .collect(Collectors.toList());
+        fileProcessorService.processFiles(catalogData, processors);
     }
 
     private void processAddCatalogEvents(Map<EventType, List<Event>> events) {
@@ -132,7 +87,7 @@ public class CatalogScannerService {
     private void processAddProcessorEvents(Map<EventType, List<Event>> events) {
         events.getOrDefault(ADD_PROCESSOR, Collections.emptyList()).stream()
                 .map(e -> (FileProcessor) e.getPayload())
-                .forEach(fileProcessorService::addProcessor);
+                .forEach(fileProcessorHolder::addProcessor);
     }
 
     private void processRemoveCatalogEvents(Map<EventType, List<Event>> events) {
@@ -144,7 +99,7 @@ public class CatalogScannerService {
     private void processRemoveProcessorEvents(Map<EventType, List<Event>> events) {
         events.getOrDefault(REMOVE_PROCESSOR, Collections.emptyList()).stream()
                 .map(e -> (FileProcessor) e.getPayload())
-                .forEach(fileProcessorService::removeProcessor);
+                .forEach(fileProcessorHolder::removeProcessor);
     }
 
     private void processShutdown(Map<EventType, List<Event>> events) {

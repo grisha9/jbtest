@@ -12,10 +12,10 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * хранилище текущих каталогов
  */
-class CatalogDataHolder {
+public class CatalogDataHolder {
     final Map<String, CatalogData> catalogDataMap;
 
-    CatalogDataHolder() {
+    public CatalogDataHolder() {
         this.catalogDataMap = new ConcurrentHashMap<>();
     }
 

@@ -2,7 +2,9 @@ package ru.rzn.gmyasoedov;
 
 import com.google.common.base.Preconditions;
 import org.jetbrains.annotations.NotNull;
+import ru.rzn.gmyasoedov.service.CatalogDataHolder;
 import ru.rzn.gmyasoedov.service.CatalogScannerService;
+import ru.rzn.gmyasoedov.service.EventService;
 import ru.rzn.gmyasoedov.service.FileProcessorHolder;
 import ru.rzn.gmyasoedov.service.FileProcessorService;
 import ru.rzn.gmyasoedov.service.processors.FileProcessor;
@@ -18,6 +20,7 @@ public class ReportProcessor {
     private final Duration schedulePeriod;
     private final CatalogScannerService catalogScannerService;
     private final ReentrantReadWriteLock readWriteLock;
+    private final EventService eventService;
     private ReportStatus status;
 
     /**
@@ -32,11 +35,16 @@ public class ReportProcessor {
         Preconditions.checkArgument(reportProcessorPoolSize > 0);
 
         this.schedulePeriod = schedulePeriod;
-        this.catalogScannerService = new CatalogScannerService(
-                new FileProcessorService(new FileProcessorHolder(), reportProcessorPoolSize)
-        );
+        this.eventService = new EventService();
         this.readWriteLock = new ReentrantReadWriteLock();
         this.status = ReportStatus.CREATED;
+
+        this.catalogScannerService = new CatalogScannerService(
+                new FileProcessorService(reportProcessorPoolSize),
+                new CatalogDataHolder(),
+                new FileProcessorHolder(),
+                eventService
+        );
     }
 
     public void start() {
@@ -49,7 +57,7 @@ public class ReportProcessor {
 
     public void addCatalog(@NotNull String path, @NotNull String type) {
         performAction(
-                () -> catalogScannerService.addCatalogEvent(path, type),
+                () -> eventService.addCatalogEvent(path, type),
                 readWriteLock.readLock(),
                 Set.of(ReportStatus.CREATED, ReportStatus.RUNNING)
         );
@@ -57,7 +65,7 @@ public class ReportProcessor {
 
     public void removeCatalog(@NotNull String path) {
         performAction(
-                () -> catalogScannerService.removeCatalogEvent(path),
+                () -> eventService.removeCatalogEvent(path),
                 readWriteLock.readLock(),
                 Set.of(ReportStatus.CREATED, ReportStatus.RUNNING)
         );
@@ -65,7 +73,7 @@ public class ReportProcessor {
 
     public void addProcessor(@NotNull FileProcessor processor) {
         performAction(
-                () -> catalogScannerService.addProcessor(processor),
+                () -> eventService.addProcessor(processor),
                 readWriteLock.readLock(),
                 Set.of(ReportStatus.CREATED, ReportStatus.RUNNING)
         );
@@ -73,21 +81,21 @@ public class ReportProcessor {
 
     public void removeProcessor(@NotNull FileProcessor processor) {
         performAction(
-                () -> catalogScannerService.removeProcessor(processor),
+                () -> eventService.removeProcessor(processor),
                 readWriteLock.readLock(),
                 Set.of(ReportStatus.CREATED, ReportStatus.RUNNING)
         );
     }
 
     public void shutdown() {
-        performAction(catalogScannerService::shutdown,
+        performAction(eventService::shutdown,
                 readWriteLock.writeLock(),
                 Set.of(ReportStatus.RUNNING),
                 ReportStatus.FINISHED);
     }
 
     public void shutdownNow() {
-        performAction(catalogScannerService::shutdownNow,
+        performAction(eventService::shutdownNow,
                 readWriteLock.writeLock(),
                 Set.of(ReportStatus.RUNNING),
                 ReportStatus.FINISHED);

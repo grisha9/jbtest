@@ -23,11 +23,9 @@ public class FileProcessorService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private final FileProcessorHolder fileProcessorHolder;
     private final ExecutorService reportProcessorPool;
 
-    public FileProcessorService(FileProcessorHolder fileProcessorHolder, int reportProcessorPoolSize) {
-        this.fileProcessorHolder = fileProcessorHolder;
+    public FileProcessorService(int reportProcessorPoolSize) {
         this.reportProcessorPool = Executors.newFixedThreadPool(reportProcessorPoolSize);
     }
 
@@ -43,19 +41,7 @@ public class FileProcessorService {
         return reportProcessorPool.isTerminated();
     }
 
-    public void addProcessor(FileProcessor processor) {
-        fileProcessorHolder.addProcessor(processor);
-    }
-
-    public void removeProcessor(FileProcessor processor) {
-        fileProcessorHolder.removeProcessor(processor);
-    }
-
-    public void processFiles(CatalogData catalogData) {
-        List<FileProcessor> processors = catalogData.getReportTypes()
-                .stream()
-                .flatMap(type -> fileProcessorHolder.getProcessorByType(type).stream())
-                .collect(Collectors.toList());
+    public void processFiles(CatalogData catalogData, List<FileProcessor> processors) {
         if (processors.isEmpty()) {
             return;
         }

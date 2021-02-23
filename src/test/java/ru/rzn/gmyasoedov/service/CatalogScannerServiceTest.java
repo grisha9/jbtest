@@ -18,18 +18,24 @@ class CatalogScannerServiceTest {
 
     private CatalogScannerService service;
     private CatalogDataHolder catalogDataHolder;
+    private EventService eventService;
 
     @BeforeEach
     void setUp() {
         catalogDataHolder = new CatalogDataHolder();
-        service = new CatalogScannerService(Mockito.mock(FileProcessorService.class), catalogDataHolder);
+        eventService = new EventService();
+        service = new CatalogScannerService(Mockito.mock(FileProcessorService.class),
+                catalogDataHolder,
+                new FileProcessorHolder(),
+                eventService
+        );
     }
 
     @Test
     void addCatalogEvent() {
-        service.addCatalogEvent(PATH_CORRECT_1, REPORT_TYPE_1);
-        service.addCatalogEvent(PATH_CORRECT_2, REPORT_TYPE_1);
-        service.addCatalogEvent(PATH_CORRECT_1_NOT_CANONICAL, REPORT_TYPE_1);
+        eventService.addCatalogEvent(PATH_CORRECT_1, REPORT_TYPE_1);
+        eventService.addCatalogEvent(PATH_CORRECT_2, REPORT_TYPE_1);
+        eventService.addCatalogEvent(PATH_CORRECT_1_NOT_CANONICAL, REPORT_TYPE_1);
         service.scanCatalog();
 
         Map<String, CatalogData> catalogDataMap = catalogDataHolder.catalogDataMap;
@@ -39,21 +45,21 @@ class CatalogScannerServiceTest {
     @Test
     void addCatalogNotExistEvent() {
         Assertions.assertThrows(IllegalArgumentException.class,
-                () -> service.addCatalogEvent("test", REPORT_TYPE_1));
+                () -> eventService.addCatalogEvent("test", REPORT_TYPE_1));
     }
 
     @Test
     void addNotCatalogEvent() {
         Assertions.assertThrows(IllegalArgumentException.class,
-                () -> service.addCatalogEvent(PATH_XML_CORRECT_FILE, REPORT_TYPE_1));
+                () -> eventService.addCatalogEvent(PATH_XML_CORRECT_FILE, REPORT_TYPE_1));
     }
 
     @Test
     void removeCatalogEvent() {
-        service.addCatalogEvent(PATH_CORRECT_1, REPORT_TYPE_1);
-        service.addCatalogEvent(PATH_CORRECT_2, REPORT_TYPE_1);
-        service.removeCatalogEvent(PATH_CORRECT_1);
-        service.removeCatalogEvent(PATH_CORRECT_2);
+        eventService.addCatalogEvent(PATH_CORRECT_1, REPORT_TYPE_1);
+        eventService.addCatalogEvent(PATH_CORRECT_2, REPORT_TYPE_1);
+        eventService.removeCatalogEvent(PATH_CORRECT_1);
+        eventService.removeCatalogEvent(PATH_CORRECT_2);
         service.scanCatalog();
 
         Assertions.assertTrue(catalogDataHolder.getCatalogs().isEmpty());
