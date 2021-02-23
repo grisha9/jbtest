@@ -15,8 +15,11 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Обработчик файлов в одном конктерном каталоге.
+ */
 public class FileProcessorService {
-    private static final Set<String> SUPPORT_FILE_EXTENSION = ImmutableSet.of(".xml");
+    private static final Set<String> SUPPORT_FILE_EXTENSION = ImmutableSet.of("xml");
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 

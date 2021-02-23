@@ -24,8 +24,12 @@ import static ru.rzn.gmyasoedov.model.EventType.ADD_CATALOG;
 import static ru.rzn.gmyasoedov.model.EventType.ADD_PROCESSOR;
 import static ru.rzn.gmyasoedov.model.EventType.REMOVE_CATALOG;
 import static ru.rzn.gmyasoedov.model.EventType.REMOVE_PROCESSOR;
+import static ru.rzn.gmyasoedov.model.EventType.SHUTDOWN;
+import static ru.rzn.gmyasoedov.model.EventType.SHUTDOWN_NOW;
 
-
+/**
+ * сканер всех зарегистрированных каталогов
+ */
 public class CatalogScannerService {
 
     private final CatalogDataHolder catalogDataHolder;
@@ -79,16 +83,11 @@ public class CatalogScannerService {
     }
 
     public void shutdown() {
-        Preconditions.checkArgument(catalogScanScheduler != null);
-        catalogScanScheduler.submit(this::scanCatalog);
-        catalogScanScheduler.shutdown();
-        fileProcessorService.shutdown();
+        eventsQueue.add(new Event<>(SHUTDOWN, null));
     }
 
     public void shutdownNow() {
-        Preconditions.checkArgument(catalogScanScheduler != null);
-        catalogScanScheduler.shutdownNow();
-        fileProcessorService.shutdownNow();
+        eventsQueue.add(new Event<>(SHUTDOWN_NOW, null));
     }
 
     public boolean isTerminated() {
@@ -105,6 +104,7 @@ public class CatalogScannerService {
 
         processRemoveCatalogEvents(events);
         processRemoveProcessorEvents(events);
+        processShutdown(events);
     }
 
     private String getCanonicalPath(File file) {
@@ -145,5 +145,15 @@ public class CatalogScannerService {
         events.getOrDefault(REMOVE_PROCESSOR, Collections.emptyList()).stream()
                 .map(e -> (FileProcessor) e.getPayload())
                 .forEach(fileProcessorService::removeProcessor);
+    }
+
+    private void processShutdown(Map<EventType, List<Event>> events) {
+        if (events.containsKey(SHUTDOWN)) {
+            catalogScanScheduler.shutdown();
+            fileProcessorService.shutdown();
+        } else if (events.containsKey(SHUTDOWN_NOW)) {
+            catalogScanScheduler.shutdownNow();
+            fileProcessorService.shutdownNow();
+        }
     }
 }

@@ -4,8 +4,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static ru.rzn.gmyasoedov.service.Constants.TEST_PROCESSOR_1;
-import static ru.rzn.gmyasoedov.service.Constants.TEST_PROCESSOR_2;
+import static ru.rzn.gmyasoedov.service.Constants.REPORT_TYPE_1;
+import static ru.rzn.gmyasoedov.service.Constants.REPORT_TYPE_2;
 
 class FileProcessorHolderTest {
 
@@ -26,10 +26,10 @@ class FileProcessorHolderTest {
         fileProcessorHolder.addProcessor(processor1);
         fileProcessorHolder.addProcessor(processor2);
 
-        Assertions.assertEquals(2, fileProcessorHolder.getProcessorByType(TEST_PROCESSOR_1.toLowerCase()).size());
-        Assertions.assertEquals(2, fileProcessorHolder.getProcessorByType(TEST_PROCESSOR_1.toUpperCase()).size());
-        Assertions.assertEquals(1, fileProcessorHolder.getProcessorByType(TEST_PROCESSOR_2.toLowerCase()).size());
-        Assertions.assertEquals(1, fileProcessorHolder.getProcessorByType(TEST_PROCESSOR_2.toUpperCase()).size());
+        Assertions.assertEquals(2, fileProcessorHolder.getProcessorByType(REPORT_TYPE_1.toLowerCase()).size());
+        Assertions.assertEquals(2, fileProcessorHolder.getProcessorByType(REPORT_TYPE_1.toUpperCase()).size());
+        Assertions.assertEquals(1, fileProcessorHolder.getProcessorByType(REPORT_TYPE_2.toLowerCase()).size());
+        Assertions.assertEquals(1, fileProcessorHolder.getProcessorByType(REPORT_TYPE_2.toUpperCase()).size());
     }
 
     @Test

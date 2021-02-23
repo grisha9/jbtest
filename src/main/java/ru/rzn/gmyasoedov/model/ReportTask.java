@@ -3,11 +3,14 @@ package ru.rzn.gmyasoedov.model;
 import java.nio.file.Path;
 import java.util.Objects;
 
+/**
+ * Задание на обработку файла. (какой файл каким процессором был обработан)
+ */
 public class ReportTask {
     private final Path reportPath;
     private final Class processorClass;
 
-    ReportTask(Path reportPath, Class reportClass) {
+    public ReportTask(Path reportPath, Class reportClass) {
         this.reportPath = reportPath;
         this.processorClass = reportClass;
     }

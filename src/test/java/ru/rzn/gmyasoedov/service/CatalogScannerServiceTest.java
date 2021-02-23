@@ -37,13 +37,13 @@ class CatalogScannerServiceTest {
     }
 
     @Test
-    void addCatalogNotExist() {
+    void addCatalogNotExistEvent() {
         Assertions.assertThrows(IllegalArgumentException.class,
                 () -> service.addCatalogEvent("test", REPORT_TYPE_1));
     }
 
     @Test
-    void addNotCatalog() {
+    void addNotCatalogEvent() {
         Assertions.assertThrows(IllegalArgumentException.class,
                 () -> service.addCatalogEvent(PATH_XML_CORRECT_FILE, REPORT_TYPE_1));
     }

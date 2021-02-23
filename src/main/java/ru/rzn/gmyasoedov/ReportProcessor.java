@@ -20,6 +20,11 @@ public class ReportProcessor {
     private final ReentrantReadWriteLock readWriteLock;
     private ReportStatus status;
 
+    /**
+     * процессор отечетов.
+     * @param schedulePeriod - период сканирования зарегистрированных каталогов
+     * @param reportProcessorPoolSize - число потоков обработки файлов
+     */
     public ReportProcessor(@NotNull Duration schedulePeriod,
                            int reportProcessorPoolSize) {
         Preconditions.checkNotNull(schedulePeriod);
@@ -86,6 +91,10 @@ public class ReportProcessor {
                 readWriteLock.writeLock(),
                 Set.of(ReportStatus.RUNNING),
                 ReportStatus.FINISHED);
+    }
+
+    public boolean isTerminated() {
+        return catalogScannerService.isTerminated();
     }
 
     private void performAction(Runnable action, Lock lock, Set<ReportStatus> validStatuses, ReportStatus newStatus) {

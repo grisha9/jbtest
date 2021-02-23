@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Состояние обработки каталога
- * processingTasks - обработанные/обрабатываемые файлы в каталоге
+ * processingTasks - обработанные/обрабатываемые таски в каталоге
  * reportTypes - типы отчетов в каталоге
  */
 public class CatalogData {
