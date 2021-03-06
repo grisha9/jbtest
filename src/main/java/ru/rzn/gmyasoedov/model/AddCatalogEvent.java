@@ -1,15 +1,17 @@
 package ru.rzn.gmyasoedov.model;
 
+import ru.rzn.gmyasoedov.service.processors.ReportType;
+
 public class AddCatalogEvent {
-    private final String reportType;
+    private final ReportType reportType;
     private final String canonicalPath;
 
-    public AddCatalogEvent(String canonicalPath, String reportType) {
+    public AddCatalogEvent(String canonicalPath, ReportType reportType) {
         this.reportType = reportType;
         this.canonicalPath = canonicalPath;
     }
 
-    public String getReportType() {
+    public ReportType getReportType() {
         return reportType;
     }
 

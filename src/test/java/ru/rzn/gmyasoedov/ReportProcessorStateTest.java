@@ -26,7 +26,7 @@ class ReportProcessorStateTest {
         reportProcessor.addCatalog(PATH_CORRECT_1, REPORT_TYPE_1);
         reportProcessor.addProcessor(processor);
         reportProcessor.removeCatalog(PATH_CORRECT_1);
-        reportProcessor.removeProcessor(processor);
+        reportProcessor.removeProcessor(processor.getReportType());
         reportProcessor.start();
         reportProcessor.shutdown();
     }
@@ -38,7 +38,7 @@ class ReportProcessorStateTest {
         reportProcessor.addCatalog(PATH_CORRECT_1, REPORT_TYPE_1);
         reportProcessor.addProcessor(processor);
         reportProcessor.removeCatalog(PATH_CORRECT_1);
-        reportProcessor.removeProcessor(processor);
+        reportProcessor.removeProcessor(processor.getReportType());
         reportProcessor.shutdown();
     }
 

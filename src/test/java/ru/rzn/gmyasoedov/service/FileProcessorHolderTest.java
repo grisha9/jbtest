@@ -26,17 +26,15 @@ class FileProcessorHolderTest {
         fileProcessorHolder.addProcessor(processor1);
         fileProcessorHolder.addProcessor(processor2);
 
-        Assertions.assertEquals(2, fileProcessorHolder.getProcessorByType(REPORT_TYPE_1.toLowerCase()).size());
-        Assertions.assertEquals(2, fileProcessorHolder.getProcessorByType(REPORT_TYPE_1.toUpperCase()).size());
-        Assertions.assertEquals(1, fileProcessorHolder.getProcessorByType(REPORT_TYPE_2.toLowerCase()).size());
-        Assertions.assertEquals(1, fileProcessorHolder.getProcessorByType(REPORT_TYPE_2.toUpperCase()).size());
+        Assertions.assertEquals(processor1, fileProcessorHolder.getProcessorByType(REPORT_TYPE_1));
+        Assertions.assertEquals(processor2, fileProcessorHolder.getProcessorByType(REPORT_TYPE_2));
     }
 
     @Test
     void removeProcessor() {
         fileProcessorHolder.addProcessor(processor1);
-        Assertions.assertFalse(fileProcessorHolder.getProcessorByType(processor1.getType()).isEmpty());
-        fileProcessorHolder.removeProcessor(processor1);
-        Assertions.assertTrue(fileProcessorHolder.getProcessorByType(processor1.getType()).isEmpty());
+        Assertions.assertNotNull(fileProcessorHolder.getProcessorByType(processor1.getReportType()));
+        fileProcessorHolder.removeProcessor(processor1.getReportType());
+        Assertions.assertNull(fileProcessorHolder.getProcessorByType(processor1.getReportType()));
     }
 }

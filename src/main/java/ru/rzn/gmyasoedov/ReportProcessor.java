@@ -8,6 +8,7 @@ import ru.rzn.gmyasoedov.service.EventService;
 import ru.rzn.gmyasoedov.service.FileProcessorHolder;
 import ru.rzn.gmyasoedov.service.FileProcessorService;
 import ru.rzn.gmyasoedov.service.processors.FileProcessor;
+import ru.rzn.gmyasoedov.service.processors.ReportType;
 
 import java.time.Duration;
 import java.util.Set;
@@ -36,7 +37,7 @@ public class ReportProcessor {
 
         this.schedulePeriod = schedulePeriod;
         this.eventService = new EventService();
-        this.readWriteLock = new ReentrantReadWriteLock();
+        this.readWriteLock = new ReentrantReadWriteLock(true);
         this.status = ReportStatus.CREATED;
 
         this.catalogScannerService = new CatalogScannerService(
@@ -55,9 +56,14 @@ public class ReportProcessor {
         );
     }
 
-    public void addCatalog(@NotNull String path, @NotNull String type) {
+    /**
+     * добавление каталога и тип отчета в нем. может быть несколько одинаковых каталогов но с разными типами
+     * @param path путь каталога
+     * @param reportType тип отчета
+     */
+    public void addCatalog(@NotNull String path, @NotNull ReportType reportType) {
         performAction(
-                () -> eventService.addCatalogEvent(path, type),
+                () -> eventService.addCatalogEvent(path, reportType),
                 readWriteLock.readLock(),
                 Set.of(ReportStatus.CREATED, ReportStatus.RUNNING)
         );
@@ -71,6 +77,10 @@ public class ReportProcessor {
         );
     }
 
+    /**
+     * добавление процессора отчетов. м.б. только один процессор с уникальным типом
+     * @param processor процессор отчетов
+     */
     public void addProcessor(@NotNull FileProcessor processor) {
         performAction(
                 () -> eventService.addProcessor(processor),
@@ -79,9 +89,9 @@ public class ReportProcessor {
         );
     }
 
-    public void removeProcessor(@NotNull FileProcessor processor) {
+    public void removeProcessor(@NotNull ReportType reportType) {
         performAction(
-                () -> eventService.removeProcessor(processor),
+                () -> eventService.removeProcessor(reportType),
                 readWriteLock.readLock(),
                 Set.of(ReportStatus.CREATED, ReportStatus.RUNNING)
         );

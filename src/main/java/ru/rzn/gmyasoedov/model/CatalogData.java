@@ -1,5 +1,7 @@
 package ru.rzn.gmyasoedov.model;
 
+import ru.rzn.gmyasoedov.service.processors.ReportType;
+
 import java.nio.file.Path;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,20 +14,20 @@ import java.util.concurrent.ConcurrentHashMap;
 public class CatalogData {
     private final String canonicalPath;
     private final Set<ReportTask> processingTasks;
-    private final Set<String> reportTypes;
+    private final Set<ReportType> reportTypes;
 
-    public CatalogData(String reportType, String canonicalPath) {
+    public CatalogData(ReportType reportType, String canonicalPath) {
         this.canonicalPath = canonicalPath;
         this.processingTasks = ConcurrentHashMap.newKeySet();
         this.reportTypes = ConcurrentHashMap.newKeySet();
         this.reportTypes.add(reportType);
     }
 
-    public void addReportTypes(String reportType) {
+    public void addReportTypes(ReportType reportType) {
         reportTypes.add(reportType);
     }
 
-    public Set<String> getReportTypes() {
+    public Set<ReportType> getReportTypes() {
         return reportTypes;
     }
 

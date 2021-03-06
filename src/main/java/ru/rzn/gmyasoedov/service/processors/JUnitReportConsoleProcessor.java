@@ -18,11 +18,12 @@ public class JUnitReportConsoleProcessor implements FileProcessor {
     private static final String TAG_TEST_CASE = "testcase";
     private static final String ATTRIBUTE_CLASS_NAME = "classname";
     private static final String ATTRIBUTE_NAME = "name";
+    private static final ReportType REPORT_TYPE = new ReportType("junit");
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Override
-    public String getType() {
-        return "junit";
+    public ReportType getReportType() {
+        return REPORT_TYPE;
     }
 
     @Override

@@ -6,6 +6,7 @@ import ru.rzn.gmyasoedov.model.AddCatalogEvent;
 import ru.rzn.gmyasoedov.model.Event;
 import ru.rzn.gmyasoedov.model.EventType;
 import ru.rzn.gmyasoedov.service.processors.FileProcessor;
+import ru.rzn.gmyasoedov.service.processors.ReportType;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,14 +37,14 @@ public class EventService {
                 .collect(Collectors.groupingBy(Event::getType));
     }
 
-    public void addCatalogEvent(@NotNull String pathString, @NotNull String type) {
+    public void addCatalogEvent(@NotNull String pathString, @NotNull ReportType reportType) {
         Preconditions.checkNotNull(pathString);
-        Preconditions.checkNotNull(type);
+        Preconditions.checkNotNull(reportType);
         File file = new File(pathString);
         Preconditions.checkArgument(file.exists());
         Preconditions.checkArgument(file.isDirectory());
         String canonicalPath = getCanonicalPath(file);
-        eventsQueue.add(new Event<>(ADD_CATALOG, new AddCatalogEvent(canonicalPath, type.toLowerCase())));
+        eventsQueue.add(new Event<>(ADD_CATALOG, new AddCatalogEvent(canonicalPath, reportType)));
     }
 
     public void removeCatalogEvent(@NotNull String pathString) {
@@ -58,9 +59,9 @@ public class EventService {
         eventsQueue.add(new Event<>(ADD_PROCESSOR, processor));
     }
 
-    public void removeProcessor(@NotNull FileProcessor processor) {
-        Preconditions.checkNotNull(processor);
-        eventsQueue.add(new Event<>(REMOVE_PROCESSOR, processor));
+    public void removeProcessor(@NotNull ReportType reportType) {
+        Preconditions.checkNotNull(reportType);
+        eventsQueue.add(new Event<>(REMOVE_PROCESSOR, reportType));
     }
 
     public void shutdown() {

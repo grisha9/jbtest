@@ -6,11 +6,13 @@ import ru.rzn.gmyasoedov.model.CatalogData;
 import ru.rzn.gmyasoedov.model.Event;
 import ru.rzn.gmyasoedov.model.EventType;
 import ru.rzn.gmyasoedov.service.processors.FileProcessor;
+import ru.rzn.gmyasoedov.service.processors.ReportType;
 
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -72,7 +74,8 @@ public class CatalogScannerService {
     private void processFiles(CatalogData catalogData) {
         List<FileProcessor> processors = catalogData.getReportTypes()
                 .stream()
-                .flatMap(type -> fileProcessorHolder.getProcessorByType(type).stream())
+                .map(fileProcessorHolder::getProcessorByType)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         fileProcessorService.processFiles(catalogData, processors);
     }
@@ -98,7 +101,7 @@ public class CatalogScannerService {
 
     private void processRemoveProcessorEvents(Map<EventType, List<Event>> events) {
         events.getOrDefault(REMOVE_PROCESSOR, Collections.emptyList()).stream()
-                .map(e -> (FileProcessor) e.getPayload())
+                .map(e -> (ReportType) e.getPayload())
                 .forEach(fileProcessorHolder::removeProcessor);
     }
 
