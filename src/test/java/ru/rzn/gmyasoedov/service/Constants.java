@@ -86,6 +86,28 @@ public abstract class Constants {
         }
     }
 
+    public static class DelayProcessor implements FileProcessor {
+        private final int delay;
+
+        public DelayProcessor(int delay) {
+            this.delay = delay;
+        }
+
+        @Override
+        public ReportType getReportType() {
+            return REPORT_TYPE_1;
+        }
+
+        @Override
+        public void process(Path path) {
+            try {
+                Thread.sleep(delay);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     private static void testProcess(Path path, List<ReportTask> performedTasks, ReportType reportType) {
         try {
             performedTasks.add(new ReportTask(path,

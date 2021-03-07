@@ -7,16 +7,16 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import ru.rzn.gmyasoedov.model.ReportTask;
 import ru.rzn.gmyasoedov.service.Constants;
-import ru.rzn.gmyasoedov.service.FileProcessorService;
+import ru.rzn.gmyasoedov.util.TestUtils;
 
+import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
@@ -24,6 +24,8 @@ import java.util.stream.Stream;
 import static java.lang.Thread.sleep;
 import static ru.rzn.gmyasoedov.service.Constants.REPORT_TYPE_1;
 import static ru.rzn.gmyasoedov.service.Constants.REPORT_TYPE_2;
+import static ru.rzn.gmyasoedov.util.TestUtils.getLastUpdateTime;
+import static ru.rzn.gmyasoedov.util.TestUtils.writeContent;
 
 class ReportProcessorTest {
 
@@ -36,16 +38,13 @@ class ReportProcessorTest {
     void setUp() throws IOException {
         reportProcessor = new ReportProcessor(Duration.ofMillis(10), 1);
         performedTasks = new CopyOnWriteArrayList<>();
-        Files.deleteIfExists(tempFilePath);
+        Arrays.stream(catalogPath.toFile().listFiles()).forEach(File::delete);
     }
 
-    @Timeout(value = 3)
+    @Timeout(value = 10)
     @ParameterizedTest()
     @CsvSource({"100, 5"})
-    void processFiles(String shutdownDelayMillis, String attemptCount) throws IOException, InterruptedException {
-        int delay = Integer.parseInt(shutdownDelayMillis);
-        int count = Integer.valueOf(attemptCount);
-
+    void processFiles(int shutdownDelayMillis, int attemptShutdownCount) throws IOException, InterruptedException {
         Constants.TestProcessor1 processor1 = new Constants.TestProcessor1(performedTasks);
         Constants.TestProcessor2 processor2 = new Constants.TestProcessor2(performedTasks);
         Path reportPath1 = Paths.get(Paths.get("").toAbsolutePath().toString(), Constants.PATH_CORRECT_1);
@@ -58,7 +57,7 @@ class ReportProcessorTest {
         reportProcessor.addCatalog(reportPath2.toString(), REPORT_TYPE_1);
         reportProcessor.shutdown();
 
-        checkTerminate(delay, count);
+        TestUtils.whaitTerminate(reportProcessor, shutdownDelayMillis, attemptShutdownCount);
 
         List<ReportTask> expectedTasks = new ArrayList<>();
         try (Stream<Path> walk = Files.walk(reportPath1)) {
@@ -81,12 +80,9 @@ class ReportProcessorTest {
 
     @Timeout(value = 10)
     @ParameterizedTest()
-    @CsvSource({"100, 5"})
-    void processFilesCreateAndUpdate(String shutdownDelayMillis, String attemptCount)
-            throws IOException, InterruptedException {
-        int delay = Integer.parseInt(shutdownDelayMillis);
-        int count = Integer.valueOf(attemptCount);
-
+    @CsvSource({"10, 100, 5"})
+    void processFilesCreateAndUpdate(int shutdownDelayMillis, int processDelayMillis, int attemptShutdownCount)
+            throws InterruptedException {
         List<String> expectedContent = new ArrayList<>();
 
         reportProcessor.addCatalog(catalogPath.toString(), REPORT_TYPE_1);
@@ -94,37 +90,17 @@ class ReportProcessorTest {
         reportProcessor.addProcessor(processor);
         reportProcessor.start();
 
-        writeContent(delay, expectedContent, 0);
-        writeContent(delay, expectedContent, 0);
-        writeContent(delay, expectedContent, 1);
-        writeContent(delay, expectedContent, 2);
+        expectedContent.add(writeContent(tempFilePath, 0));
+        sleep(processDelayMillis);
+        expectedContent.add(writeContent(tempFilePath, 0));
+        sleep(processDelayMillis);
+        expectedContent.add(writeContent(tempFilePath, 1));
+        sleep(processDelayMillis);
+        expectedContent.add(writeContent(tempFilePath, 2));
+        sleep(processDelayMillis);
 
         reportProcessor.shutdown();
-        checkTerminate(delay, count);
+        TestUtils.whaitTerminate(reportProcessor, shutdownDelayMillis, attemptShutdownCount);
         Assertions.assertEquals(expectedContent, processor.getActualContent());
-    }
-
-    private void writeContent(int delay, List<String> expectedContent, int i) throws IOException, InterruptedException {
-        String content = String.format("<test%s/>", i);
-        expectedContent.add(content);
-        Files.writeString(tempFilePath, content, StandardCharsets.UTF_8);
-        sleep(delay);
-    }
-
-    private void checkTerminate(int delay, int count) throws InterruptedException {
-        for (int i = 0; i < count; i++) {
-            sleep(delay);
-            if (reportProcessor.isTerminated()) {
-                break;
-            }
-        }
-    }
-
-    private static Instant getLastUpdateTime(Path path) {
-        try {
-            return FileProcessorService.getLastUpdateTime(path);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 }
