@@ -1,6 +1,9 @@
 package ru.rzn.gmyasoedov.model;
 
+import ru.rzn.gmyasoedov.service.processors.ReportType;
+
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Objects;
 
 /**
@@ -8,19 +11,26 @@ import java.util.Objects;
  */
 public class ReportTask {
     private final Path reportPath;
-    private final Class processorClass;
+    private final ReportType reportType;
+    private final Instant lastModifyFileTime;
 
-    public ReportTask(Path reportPath, Class reportClass) {
-        this.reportPath = reportPath;
-        this.processorClass = reportClass;
+    public ReportTask(Path reportPath, ReportType reportType, Instant lastModifyFileTime) {
+        this.reportPath = Objects.requireNonNull(reportPath);
+        this.reportType = Objects.requireNonNull(reportType);
+        this.lastModifyFileTime = Objects.requireNonNull(lastModifyFileTime);
     }
+
 
     public Path getReportPath() {
         return reportPath;
     }
 
-    public Class getProcessorClass() {
-        return processorClass;
+    public ReportType getReportType() {
+        return reportType;
+    }
+
+    public Instant getLastModifyFileTime() {
+        return lastModifyFileTime;
     }
 
     @Override
@@ -28,12 +38,13 @@ public class ReportTask {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ReportTask that = (ReportTask) o;
-        return Objects.equals(reportPath, that.reportPath) &&
-                Objects.equals(processorClass, that.processorClass);
+        return reportPath.equals(that.reportPath) &&
+                reportType.equals(that.reportType) &&
+                lastModifyFileTime.equals(that.lastModifyFileTime);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(reportPath, processorClass);
+        return Objects.hash(reportPath, reportType, lastModifyFileTime);
     }
 }

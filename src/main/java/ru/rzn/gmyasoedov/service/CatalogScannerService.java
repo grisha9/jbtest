@@ -50,7 +50,7 @@ public class CatalogScannerService {
         Preconditions.checkArgument(catalogScanScheduler == null);
         catalogScanScheduler = Executors.newSingleThreadScheduledExecutor();
         catalogScanScheduler.scheduleWithFixedDelay(
-                this::scanCatalog, 0, schedulePeriod.getSeconds(), TimeUnit.SECONDS
+                this::scanCatalog, 0, schedulePeriod.toMillis(), TimeUnit.MILLISECONDS
         );
     }
 

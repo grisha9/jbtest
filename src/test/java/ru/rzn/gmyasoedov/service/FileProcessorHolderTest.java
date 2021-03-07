@@ -3,6 +3,7 @@ package ru.rzn.gmyasoedov.service;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import ru.rzn.gmyasoedov.service.processors.ReportType;
 
 import static ru.rzn.gmyasoedov.service.Constants.REPORT_TYPE_1;
 import static ru.rzn.gmyasoedov.service.Constants.REPORT_TYPE_2;
@@ -27,6 +28,15 @@ class FileProcessorHolderTest {
         fileProcessorHolder.addProcessor(processor2);
 
         Assertions.assertEquals(processor1, fileProcessorHolder.getProcessorByType(REPORT_TYPE_1));
+        Assertions.assertEquals(processor1, fileProcessorHolder
+                .getProcessorByType(new ReportType(REPORT_TYPE_1.getType().toLowerCase())));
+        Assertions.assertEquals(processor1, fileProcessorHolder
+                .getProcessorByType(new ReportType(REPORT_TYPE_1.getType().toUpperCase())));
+
+        Assertions.assertEquals(processor2, fileProcessorHolder
+                .getProcessorByType(new ReportType(REPORT_TYPE_2.getType().toLowerCase())));
+        Assertions.assertEquals(processor2, fileProcessorHolder
+                .getProcessorByType(new ReportType(REPORT_TYPE_2.getType().toUpperCase())));
         Assertions.assertEquals(processor2, fileProcessorHolder.getProcessorByType(REPORT_TYPE_2));
     }
 

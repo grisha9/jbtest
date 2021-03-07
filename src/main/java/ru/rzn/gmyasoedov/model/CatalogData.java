@@ -2,7 +2,6 @@ package ru.rzn.gmyasoedov.model;
 
 import ru.rzn.gmyasoedov.service.processors.ReportType;
 
-import java.nio.file.Path;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -31,12 +30,8 @@ public class CatalogData {
         return reportTypes;
     }
 
-    public boolean isProcessingTask(Path filePath, Class processorClass) {
-        return processingTasks.contains(new ReportTask(filePath, processorClass));
-    }
-
-    public void addProcessingTasks(Path filePath, Class processorClass) {
-        processingTasks.add(new ReportTask(filePath, processorClass));
+    public boolean addProcessingTasks(ReportTask reportTask) {
+        return processingTasks.add(reportTask);
     }
 
     public String getCanonicalPath() {

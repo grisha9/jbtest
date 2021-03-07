@@ -32,7 +32,7 @@ public class ReportProcessor {
     public ReportProcessor(@NotNull Duration schedulePeriod,
                            int reportProcessorPoolSize) {
         Preconditions.checkNotNull(schedulePeriod);
-        Preconditions.checkArgument(schedulePeriod.getSeconds() > 0);
+        Preconditions.checkArgument(schedulePeriod.toMillis() > 0);
         Preconditions.checkArgument(reportProcessorPoolSize > 0);
 
         this.schedulePeriod = schedulePeriod;
