@@ -78,7 +78,7 @@ public class ReportProcessor {
     }
 
     /**
-     * добавление процессора отчетов. м.б. только один процессор с уникальным типом
+     * добавление процессора отчетов. м.б. только несколько процессоров с одним типом
      * @param processor процессор отчетов
      */
     public void addProcessor(@NotNull FileProcessor processor) {
@@ -89,6 +89,10 @@ public class ReportProcessor {
         );
     }
 
+    /**
+     * удаление процессора по типу. если процессоров несколько то удалиться первый
+     * @param reportType
+     */
     public void removeProcessor(@NotNull ReportType reportType) {
         performAction(
                 () -> eventService.removeProcessor(reportType),

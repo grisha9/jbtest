@@ -1,11 +1,14 @@
 package ru.rzn.gmyasoedov.service;
 
 import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.rzn.gmyasoedov.model.AddCatalogEvent;
 import ru.rzn.gmyasoedov.model.CatalogData;
 import ru.rzn.gmyasoedov.model.Event;
 import ru.rzn.gmyasoedov.model.EventType;
 import ru.rzn.gmyasoedov.service.processors.FileProcessor;
+import ru.rzn.gmyasoedov.service.processors.FileProcessorProxy;
 import ru.rzn.gmyasoedov.service.processors.ReportType;
 
 import java.time.Duration;
@@ -29,6 +32,7 @@ import static ru.rzn.gmyasoedov.model.EventType.SHUTDOWN_NOW;
  * сканер всех зарегистрированных каталогов
  */
 public class CatalogScannerService {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final CatalogDataHolder catalogDataHolder;
     private final FileProcessorHolder fileProcessorHolder;
@@ -60,21 +64,25 @@ public class CatalogScannerService {
     }
 
     void scanCatalog() {
-        Map<EventType, List<Event>> events = eventService.pollEvents();
-        processAddCatalogEvents(events);
-        processAddProcessorEvents(events);
+        try {
+            Map<EventType, List<Event>> events = eventService.pollEvents();
+            processAddCatalogEvents(events);
+            processAddProcessorEvents(events);
 
-        catalogDataHolder.getCatalogs().forEach(this::processFiles);
+            catalogDataHolder.getCatalogs().forEach(this::processFiles);
 
-        processRemoveCatalogEvents(events);
-        processRemoveProcessorEvents(events);
-        processShutdown(events);
+            processRemoveCatalogEvents(events);
+            processRemoveProcessorEvents(events);
+            processShutdown(events);
+        } catch (Exception e) {
+            logger.error("scan catalog error", e);
+        }
     }
 
     private void processFiles(CatalogData catalogData) {
-        List<FileProcessor> processors = catalogData.getReportTypes()
+        List<FileProcessorProxy> processors = catalogData.getReportTypes()
                 .stream()
-                .map(fileProcessorHolder::getProcessorByType)
+                .flatMap(type -> fileProcessorHolder.getProcessorByType(type).stream())
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         fileProcessorService.processFiles(catalogData, processors);

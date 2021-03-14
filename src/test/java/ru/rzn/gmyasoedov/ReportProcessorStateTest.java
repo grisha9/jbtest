@@ -11,7 +11,6 @@ import static ru.rzn.gmyasoedov.service.Constants.PATH_CORRECT_1;
 import static ru.rzn.gmyasoedov.service.Constants.REPORT_TYPE_1;
 
 class ReportProcessorStateTest {
-    private static final String PATH_1 = "src/test/resources/dir1";
 
     private ReportProcessor reportProcessor;
 

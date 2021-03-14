@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import ru.rzn.gmyasoedov.model.CatalogData;
 import ru.rzn.gmyasoedov.model.ReportTask;
 import ru.rzn.gmyasoedov.service.processors.FileProcessor;
+import ru.rzn.gmyasoedov.service.processors.FileProcessorProxy;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -44,7 +45,7 @@ public class FileProcessorService {
         return reportProcessorPool.isTerminated();
     }
 
-    public void processFiles(CatalogData catalogData, List<FileProcessor> processors) {
+    public void processFiles(CatalogData catalogData, List<FileProcessorProxy> processors) {
         if (processors.isEmpty()) {
             return;
         }
@@ -58,11 +59,12 @@ public class FileProcessorService {
         }
     }
 
-    private void submitTasks(CatalogData catalogData, Path filePath, List<FileProcessor> processors) {
+    private void submitTasks(CatalogData catalogData, Path filePath, List<FileProcessorProxy> processors) {
         try {
             Instant lastModifyTime = getLastUpdateTime(filePath);
-            for (FileProcessor processor : processors) {
-                ReportTask task = new ReportTask(filePath, processor.getReportType(), lastModifyTime);
+            for (FileProcessorProxy proxy : processors) {
+                FileProcessor processor = proxy.getFileProcessor();
+                ReportTask task = new ReportTask(filePath, processor.getReportType(), proxy.getId(), lastModifyTime);
                 if (catalogData.addProcessingTasks(task)) {
                     reportProcessorPool.submit(() -> processor.process(filePath));
                 }

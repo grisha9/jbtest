@@ -5,6 +5,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.Mockito;
 import ru.rzn.gmyasoedov.model.ReportTask;
 import ru.rzn.gmyasoedov.service.Constants;
 import ru.rzn.gmyasoedov.util.TestUtils;
@@ -19,9 +21,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.lang.Thread.sleep;
+import static org.mockito.Mockito.times;
 import static ru.rzn.gmyasoedov.service.Constants.REPORT_TYPE_1;
 import static ru.rzn.gmyasoedov.service.Constants.REPORT_TYPE_2;
 import static ru.rzn.gmyasoedov.util.TestUtils.getLastUpdateTime;
@@ -60,20 +65,15 @@ class ReportProcessorTest {
         TestUtils.whaitTerminate(reportProcessor, shutdownDelayMillis, attemptShutdownCount);
 
         List<ReportTask> expectedTasks = new ArrayList<>();
-        try (Stream<Path> walk = Files.walk(reportPath1)) {
-            walk.filter(Files::isRegularFile)
-                    .filter(p -> p.toString().endsWith("xml"))
-                    .flatMap(path -> Stream.of(processor1, processor2)
-                            .map(pr -> new ReportTask(path, pr.getReportType(), getLastUpdateTime(path))))
-                    .forEach(expectedTasks::add);
-        }
-        try (Stream<Path> walk = Files.walk(reportPath2)) {
-            walk.filter(Files::isRegularFile)
-                    .filter(p -> p.toString().endsWith("xml"))
-                    .flatMap(path -> Stream.of(processor1)
-                            .map(pr -> new ReportTask(path, pr.getReportType(), getLastUpdateTime(path))))
-                    .forEach(expectedTasks::add);
-        }
+        getFilesPath(reportPath1).forEach(p -> expectedTasks.add(
+                new ReportTask(p, processor1.getReportType(), processor1.getId(), getLastUpdateTime(p))
+        ));
+        getFilesPath(reportPath1).forEach(p -> expectedTasks.add(
+                new ReportTask(p, processor2.getReportType(), processor2.getId(), getLastUpdateTime(p))
+        ));
+        getFilesPath(reportPath2).forEach(p -> expectedTasks.add(
+                new ReportTask(p, processor1.getReportType(), processor1.getId(), getLastUpdateTime(p))
+        ));
         Assertions.assertEquals(expectedTasks.size(), performedTasks.size());
         performedTasks.forEach(pt -> Assertions.assertTrue(expectedTasks.contains(pt)));
     }
@@ -102,5 +102,29 @@ class ReportProcessorTest {
         reportProcessor.shutdown();
         TestUtils.whaitTerminate(reportProcessor, shutdownDelayMillis, attemptShutdownCount);
         Assertions.assertEquals(expectedContent, processor.getActualContent());
+    }
+
+    @Timeout(value = 10)
+    @ParameterizedTest()
+    @ValueSource(ints = {1, 2, 3})
+    void manyOneTypeProcessors(int processorCount) throws InterruptedException {
+        writeContent(Path.of(catalogPath.toString(), "file0.xml"), 0);
+
+        Constants.TestProcessor1 processor = Mockito.spy(Constants.TestProcessor1.class);
+        IntStream.range(0, processorCount).forEach(i -> reportProcessor.addProcessor(processor));
+        reportProcessor.addCatalog(catalogPath.toString(), processor.getReportType());
+        reportProcessor.start();
+        reportProcessor.shutdown();
+
+        TestUtils.whaitTerminate(reportProcessor, 100, 10);
+        Mockito.verify(processor, times(processorCount)).process(Mockito.any());
+    }
+
+    private List<Path> getFilesPath(Path path) throws IOException {
+        try (Stream<Path> walk = Files.walk(path)) {
+            return walk.filter(Files::isRegularFile)
+                    .filter(p -> p.toString().endsWith("xml"))
+                    .collect(Collectors.toList());
+        }
     }
 }

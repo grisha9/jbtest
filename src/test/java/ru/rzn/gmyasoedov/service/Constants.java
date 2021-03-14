@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public abstract class Constants {
     public static final String PATH_CORRECT_1 = "src/test/resources/dir1";
@@ -21,7 +22,8 @@ public abstract class Constants {
     public static final ReportType REPORT_TYPE_2 = new ReportType("type2");
 
     public static class TestProcessor1 implements FileProcessor {
-        private List<ReportTask> performedTasks;
+        private final List<ReportTask> performedTasks;
+        private final String id = UUID.randomUUID().toString();
 
         public TestProcessor1() {
             this(new ArrayList<>());
@@ -31,6 +33,10 @@ public abstract class Constants {
             this.performedTasks = performedTasks;
         }
 
+        public String getId() {
+            return id;
+        }
+
         @Override
         public ReportType getReportType() {
             return REPORT_TYPE_1;
@@ -38,12 +44,13 @@ public abstract class Constants {
 
         @Override
         public void process(Path path) {
-            testProcess(path, performedTasks, getReportType());
+            testProcess(path, performedTasks, getReportType(), id);
         }
     }
 
     public static class TestProcessor2 implements FileProcessor {
-        private List<ReportTask> performedTasks;
+        private final List<ReportTask> performedTasks;
+        private final String id = UUID.randomUUID().toString();
 
         public TestProcessor2() {
             this(new ArrayList<>());
@@ -53,6 +60,10 @@ public abstract class Constants {
             this.performedTasks = performedTasks;
         }
 
+        public String getId() {
+            return id;
+        }
+
         @Override
         public ReportType getReportType() {
             return REPORT_TYPE_2;
@@ -60,7 +71,7 @@ public abstract class Constants {
 
         @Override
         public void process(Path path) {
-            testProcess(path, performedTasks, getReportType());
+            testProcess(path, performedTasks, getReportType(), id);
         }
     }
 
@@ -108,10 +119,11 @@ public abstract class Constants {
         }
     }
 
-    private static void testProcess(Path path, List<ReportTask> performedTasks, ReportType reportType) {
+    private static void testProcess(Path path, List<ReportTask> performedTasks, ReportType reportType, String id) {
         try {
             performedTasks.add(new ReportTask(path,
                     reportType,
+                    id,
                     FileProcessorService.getLastUpdateTime(path)));
         } catch (IOException e) {
             e.printStackTrace();

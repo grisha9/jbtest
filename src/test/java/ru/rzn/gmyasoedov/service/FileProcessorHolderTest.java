@@ -3,7 +3,12 @@ package ru.rzn.gmyasoedov.service;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import ru.rzn.gmyasoedov.service.processors.FileProcessor;
+import ru.rzn.gmyasoedov.service.processors.FileProcessorProxy;
 import ru.rzn.gmyasoedov.service.processors.ReportType;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static ru.rzn.gmyasoedov.service.Constants.REPORT_TYPE_1;
 import static ru.rzn.gmyasoedov.service.Constants.REPORT_TYPE_2;
@@ -27,24 +32,47 @@ class FileProcessorHolderTest {
         fileProcessorHolder.addProcessor(processor1);
         fileProcessorHolder.addProcessor(processor2);
 
-        Assertions.assertEquals(processor1, fileProcessorHolder.getProcessorByType(REPORT_TYPE_1));
-        Assertions.assertEquals(processor1, fileProcessorHolder
-                .getProcessorByType(new ReportType(REPORT_TYPE_1.getType().toLowerCase())));
-        Assertions.assertEquals(processor1, fileProcessorHolder
-                .getProcessorByType(new ReportType(REPORT_TYPE_1.getType().toUpperCase())));
+        List<Constants.TestProcessor1> expected1 = List.of(processor1, processor1);
+        List<Constants.TestProcessor2> expected2 = List.of(processor2);
+        Assertions.assertEquals(expected1,
+                getFileProcessors(fileProcessorHolder.getProcessorByType(REPORT_TYPE_1)));
+        Assertions.assertEquals(expected1,
+                getFileProcessors(fileProcessorHolder
+                        .getProcessorByType(new ReportType(REPORT_TYPE_1.getType().toLowerCase()))));
+        Assertions.assertEquals(expected1,
+                getFileProcessors(fileProcessorHolder
+                        .getProcessorByType(new ReportType(REPORT_TYPE_1.getType().toUpperCase()))));
 
-        Assertions.assertEquals(processor2, fileProcessorHolder
-                .getProcessorByType(new ReportType(REPORT_TYPE_2.getType().toLowerCase())));
-        Assertions.assertEquals(processor2, fileProcessorHolder
-                .getProcessorByType(new ReportType(REPORT_TYPE_2.getType().toUpperCase())));
-        Assertions.assertEquals(processor2, fileProcessorHolder.getProcessorByType(REPORT_TYPE_2));
+        Assertions.assertEquals(expected2,
+                getFileProcessors(fileProcessorHolder.getProcessorByType(REPORT_TYPE_2)));
+        Assertions.assertEquals(expected2,
+                getFileProcessors(fileProcessorHolder
+                        .getProcessorByType(new ReportType(REPORT_TYPE_2.getType().toLowerCase()))));
+        Assertions.assertEquals(expected2,
+                getFileProcessors(fileProcessorHolder
+                        .getProcessorByType(new ReportType(REPORT_TYPE_2.getType().toUpperCase()))));
     }
 
     @Test
-    void removeProcessor() {
+    void removeProcessorOne() {
         fileProcessorHolder.addProcessor(processor1);
-        Assertions.assertNotNull(fileProcessorHolder.getProcessorByType(processor1.getReportType()));
+        Assertions.assertFalse(fileProcessorHolder.getProcessorByType(processor1.getReportType()).isEmpty());
         fileProcessorHolder.removeProcessor(processor1.getReportType());
-        Assertions.assertNull(fileProcessorHolder.getProcessorByType(processor1.getReportType()));
+        Assertions.assertTrue(fileProcessorHolder.getProcessorByType(processor1.getReportType()).isEmpty());
+    }
+
+    @Test
+    void removeProcessorMany() {
+        fileProcessorHolder.addProcessor(processor1);
+        fileProcessorHolder.addProcessor(processor1);
+        Assertions.assertFalse(fileProcessorHolder.getProcessorByType(processor1.getReportType()).isEmpty());
+        fileProcessorHolder.removeProcessor(processor1.getReportType());
+        Assertions.assertFalse(fileProcessorHolder.getProcessorByType(processor1.getReportType()).isEmpty());
+        fileProcessorHolder.removeProcessor(processor1.getReportType());
+        Assertions.assertTrue(fileProcessorHolder.getProcessorByType(processor1.getReportType()).isEmpty());
+    }
+
+    private List<FileProcessor> getFileProcessors(List<FileProcessorProxy> proxies) {
+        return proxies.stream().map(FileProcessorProxy::getFileProcessor).collect(Collectors.toList());
     }
 }

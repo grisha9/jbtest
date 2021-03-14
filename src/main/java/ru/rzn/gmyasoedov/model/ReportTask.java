@@ -12,10 +12,12 @@ import java.util.Objects;
 public class ReportTask {
     private final Path reportPath;
     private final ReportType reportType;
+    private final String processorId;
     private final Instant lastModifyFileTime;
 
-    public ReportTask(Path reportPath, ReportType reportType, Instant lastModifyFileTime) {
+    public ReportTask(Path reportPath, ReportType reportType, String processorId, Instant lastModifyFileTime) {
         this.reportPath = Objects.requireNonNull(reportPath);
+        this.processorId = Objects.requireNonNull(processorId);
         this.reportType = Objects.requireNonNull(reportType);
         this.lastModifyFileTime = Objects.requireNonNull(lastModifyFileTime);
     }
@@ -29,6 +31,10 @@ public class ReportTask {
         return reportType;
     }
 
+    public String getProcessorId() {
+        return processorId;
+    }
+
     public Instant getLastModifyFileTime() {
         return lastModifyFileTime;
     }
@@ -40,11 +46,12 @@ public class ReportTask {
         ReportTask that = (ReportTask) o;
         return reportPath.equals(that.reportPath) &&
                 reportType.equals(that.reportType) &&
+                processorId.equals(that.processorId) &&
                 lastModifyFileTime.equals(that.lastModifyFileTime);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(reportPath, reportType, lastModifyFileTime);
+        return Objects.hash(reportPath, reportType, processorId, lastModifyFileTime);
     }
 }
