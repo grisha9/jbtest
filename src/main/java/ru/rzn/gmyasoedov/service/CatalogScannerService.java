@@ -68,6 +68,7 @@ public class CatalogScannerService {
             Map<EventType, List<Event>> events = eventService.pollEvents();
             processAddCatalogEvents(events);
             processAddProcessorEvents(events);
+            processShutdownNow(events);
 
             catalogDataHolder.getCatalogs().forEach(this::processFiles);
 
@@ -117,7 +118,11 @@ public class CatalogScannerService {
         if (events.containsKey(SHUTDOWN)) {
             catalogScanScheduler.shutdown();
             fileProcessorService.shutdown();
-        } else if (events.containsKey(SHUTDOWN_NOW)) {
+        }
+    }
+
+    private void processShutdownNow(Map<EventType, List<Event>> events) {
+        if (events.containsKey(SHUTDOWN_NOW)) {
             catalogScanScheduler.shutdownNow();
             fileProcessorService.shutdownNow();
         }

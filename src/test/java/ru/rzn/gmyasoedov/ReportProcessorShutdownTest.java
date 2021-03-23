@@ -85,19 +85,19 @@ class ReportProcessorShutdownTest {
         Mockito.verify(processor, atMost(scenario.getProcessorThreadCount())).process(Mockito.any());
     }
 
-    @Timeout(value = 10)
+    @Timeout(value = 20)
     @ParameterizedTest()
     @CsvSource({
-            "1000 1 5 1", //период опроса каталога 1 сек обработка в 1 поток, 5 тасков по 1мс
-            "10 2 2 1"} //период опроса каталога 10 мс обработка в 2 потока, 2 таска по 1мс
+            "1000 1 5 0", //период опроса каталога 1 сек обработка в 1 поток, 5 тасков по 0мс
+            "2000 1 2 0"} //период опроса каталога 2 сек обработка в 1 поток, 2 таска по 0мс
     )
-    void shutdownLatch(TestScenario scenario) throws InterruptedException {
+    void shutdownNowLatch(TestScenario scenario) throws InterruptedException {
         reportProcessor = new ReportProcessor(
                 Duration.ofMillis(scenario.getPeriodMs()),
                 scenario.getProcessorThreadCount()
         );
 
-        CountDownLatch countDownLatch = new CountDownLatch(scenario.getTaskCount());
+        CountDownLatch countDownLatch = new CountDownLatch(1);
         FileProcessor processor = Mockito.spy(new FileProcessor() {
             @Override
             public ReportType getReportType() {
@@ -111,12 +111,55 @@ class ReportProcessorShutdownTest {
         });
         reportProcessor.addProcessor(processor);
         reportProcessor.addCatalog(catalogPath.toString(), processor.getReportType());
+        writeContent(Path.of(catalogPath.toString(), format(templateFileName, 0)), 0);
         reportProcessor.start();
-        IntStream.range(0, scenario.getTaskCount())
+
+        countDownLatch.await();
+
+        IntStream.range(1, scenario.getTaskCount())
+                .forEach(i -> writeContent(Path.of(catalogPath.toString(), format(templateFileName, i)), i));
+        reportProcessor.shutdownNow();
+
+        TestUtils.whaitTerminate(reportProcessor, scenario.getPeriodMs(), scenario.getTaskCount() * 2);
+        Mockito.verify(processor, times(1)).process(Mockito.any());
+    }
+
+    @Timeout(value = 20)
+    @ParameterizedTest()
+    @CsvSource({
+            "1000 1 5 0", //период опроса каталога 1 сек обработка в 1 поток, 5 тасков по 0мс
+            "2000 1 2 0"} //период опроса каталога 2 сек обработка в 1 поток, 2 таска по 0мс
+    )
+    void shutdownLatch(TestScenario scenario) throws InterruptedException {
+        reportProcessor = new ReportProcessor(
+                Duration.ofMillis(scenario.getPeriodMs()),
+                scenario.getProcessorThreadCount()
+        );
+
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        FileProcessor processor = Mockito.spy(new FileProcessor() {
+            @Override
+            public ReportType getReportType() {
+                return REPORT_TYPE_1;
+            }
+
+            @Override
+            public void process(Path path) {
+                countDownLatch.countDown();
+            }
+        });
+        reportProcessor.addProcessor(processor);
+        reportProcessor.addCatalog(catalogPath.toString(), processor.getReportType());
+        writeContent(Path.of(catalogPath.toString(), format(templateFileName, 0)), 0);
+        reportProcessor.start();
+
+        countDownLatch.await();
+
+        IntStream.range(1, scenario.getTaskCount())
                 .forEach(i -> writeContent(Path.of(catalogPath.toString(), format(templateFileName, i)), i));
         reportProcessor.shutdown();
 
-        TestUtils.whaitTerminate(reportProcessor, scenario.getTaskDelayMs(), scenario.getTaskCount() * 2);
-        countDownLatch.await();
+        TestUtils.whaitTerminate(reportProcessor, scenario.getPeriodMs(), scenario.getTaskCount() * 2);
+        Mockito.verify(processor, times(scenario.getTaskCount())).process(Mockito.any());
     }
 }
